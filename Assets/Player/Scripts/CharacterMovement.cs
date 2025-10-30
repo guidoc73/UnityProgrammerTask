@@ -8,6 +8,8 @@ namespace Player.Scripts
     public class CharacterMovement : MonoBehaviour
     {
         private const float IDLE_SPEED = 0;
+        private const float DAMP_TIME = 0.1f;
+        private const string SPEED_ANIMATOR_PARAMETER = "Speed";
 
         [Header("Movement Settings")]
         [SerializeField] private float _acceleration;
@@ -26,7 +28,10 @@ namespace Player.Scripts
         private float _resultSpeed;
         private float _targetSpeed;
         private float _maxSpeed;
-
+        
+        private Vector3 _lastPosition;
+        private float _currentSpeed;
+        
         private void Awake()
         {
             _characterController = GetComponent<CharacterController>();
@@ -34,11 +39,14 @@ namespace Player.Scripts
             _moveAction = InputSystem.actions.FindAction("Move");
             _sprintAction = InputSystem.actions.FindAction("Sprint");
             _targetSpeed = _walkSpeed;
+            _lastPosition = transform.position;
         }
-
+        
         private void Update()
         {
             Move();
+            SetSpeedParameterOnAnimator();
+
         }
 
         private void Move()
@@ -57,19 +65,30 @@ namespace Player.Scripts
                 _targetSpeed = IDLE_SPEED;
             }
             
-            //TODO: Tengo que hacer que el threshold del blend del animator se base en ciertos datos, no hardcodeado
-            //porque si lo cambio en editor no va a quedar prolijo.
-            
-            //TODO: Guardar cambios en el prefab del personaje en la escena q no se si me faltó algo.
-            
             var rate = _targetSpeed > _resultSpeed ? _acceleration : _deceleration;
             _resultSpeed = Mathf.MoveTowards(_resultSpeed, _targetSpeed, rate * Time.deltaTime);
-            
-            _animator.SetFloat("Speed", _resultSpeed);
             
             var movement = transform.forward * (_resultSpeed * Time.deltaTime);
 
             _characterController.Move(movement);
+        }
+        
+        private void SetSpeedParameterOnAnimator()
+        {
+            _currentSpeed = _characterController.velocity.magnitude;
+            _lastPosition = transform.position;
+
+            var normalizedSpeed = 0f;
+
+            if (_currentSpeed > 0f)
+            {
+                if (_currentSpeed < _walkSpeed)
+                    normalizedSpeed = Mathf.InverseLerp(0f, _walkSpeed, _currentSpeed) * 0.5f;
+                else
+                    normalizedSpeed = 0.5f + Mathf.InverseLerp(_walkSpeed, _sprintSpeed, _currentSpeed) * 0.5f;
+            }
+
+            _animator.SetFloat(SPEED_ANIMATOR_PARAMETER, normalizedSpeed, DAMP_TIME, Time.deltaTime); 
         }
 
         private Vector3 GetSmoothRotation(Vector2 direction)
