@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utils;
@@ -13,6 +12,9 @@ namespace Player.Scripts
         [SerializeField] private float _deceleration;
         [SerializeField] private float _walkSpeed;
         [SerializeField] private float _sprintSpeed;
+        
+        [Header("Rotation Settings")]
+        [SerializeField] private float _rotationSpeed;
         
         private CharacterController _characterController;
         
@@ -44,7 +46,7 @@ namespace Player.Scripts
             if (moveValue != Vector2.zero)
             {
                 _resultSpeed += _acceleration * Time.deltaTime;
-                transform.forward = direction.ToFixedVector3(); //TODO: hacer que la rotación sea fluida
+                transform.forward = GetSmoothRotation(direction); //TODO: hacer que la rotación sea fluida
             }
             else
             {
@@ -57,7 +59,15 @@ namespace Player.Scripts
 
             _characterController.Move(movement);
         }
-        
+
+        private Vector3 GetSmoothRotation(Vector2 direction)
+        {
+            var targetDirection = direction.ToFixedVector3();
+            
+            var resultDirection = Vector3.Lerp(transform.forward, targetDirection, _rotationSpeed * Time.deltaTime);
+            return resultDirection;
+        }
+
         private void OnSprintPressed(InputAction.CallbackContext context)
         {
             _targetSpeed = _sprintSpeed;
