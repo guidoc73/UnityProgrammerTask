@@ -60,6 +60,8 @@ namespace Player.Scripts
             //TODO: Tengo que hacer que el threshold del blend del animator se base en ciertos datos, no hardcodeado
             //porque si lo cambio en editor no va a quedar prolijo.
             
+            //TODO: Guardar cambios en el prefab del personaje en la escena q no se si me faltó algo.
+            
             var rate = _targetSpeed > _resultSpeed ? _acceleration : _deceleration;
             _resultSpeed = Mathf.MoveTowards(_resultSpeed, _targetSpeed, rate * Time.deltaTime);
             
